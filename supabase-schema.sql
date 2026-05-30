@@ -76,11 +76,10 @@ alter table options enable row level security;
 alter table participants enable row level security;
 alter table admins enable row level security;
 
-create policy "Enable all access for all users on quizzes" on quizzes for all using (true) with check (true);
-create policy "Enable all access for all users on questions" on questions for all using (true) with check (true);
-create policy "Enable all access for all users on options" on options for all using (true) with check (true);
-create policy "Enable all access for all users on participants" on participants for all using (true) with check (true);
-create policy "Enable all access for all users on admins" on admins for all using (true) with check (true);
+-- RLS: anon role has NO access to quizzes/questions/options/admins.
+-- All reads/writes go through service-role server API endpoints.
+-- participants is readable by anon for the public realtime leaderboard.
+create policy "anon read participants" on participants for select using (true);
 
 -- Enable Supabase Realtime for specific tables (AFTER tables exist)
 begin;
