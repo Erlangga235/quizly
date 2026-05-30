@@ -29,10 +29,14 @@ export function signSession(
 }
 
 export function verifySession(token: string, secret: string): AdminSession {
-  if (typeof token !== 'string' || !token.includes('.')) {
+  if (typeof token !== 'string') {
     throw new Error('Malformed token')
   }
-  const [encoded, signature] = token.split('.')
+  const parts = token.split('.')
+  if (parts.length !== 2) {
+    throw new Error('Malformed token')
+  }
+  const [encoded, signature] = parts
   if (!encoded || !signature) {
     throw new Error('Malformed token')
   }
@@ -49,6 +53,9 @@ export function verifySession(token: string, secret: string): AdminSession {
     throw new Error('Invalid payload')
   }
   const now = Math.floor(Date.now() / 1000)
+  if (typeof payload.sub !== 'string' || !payload.sub) {
+    throw new Error('Invalid payload')
+  }
   if (typeof payload.exp !== 'number' || payload.exp < now) {
     throw new Error('Token expired')
   }
