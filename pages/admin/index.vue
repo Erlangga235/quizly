@@ -5,17 +5,21 @@ import { useRouter } from 'vue-router'
 definePageMeta({ middleware: 'admin-auth' })
 
 const router = useRouter()
-const supabase = useSupabaseClient()
 const adminUsername = ref('')
-const adminId = ref('')
+const adminToken = ref('')
+
+function authHeaders() {
+  return { Authorization: `Bearer ${adminToken.value}` }
+}
 
 onMounted(() => {
   adminUsername.value = localStorage.getItem('adminUsername') || 'Admin'
-  adminId.value = localStorage.getItem('adminId') || ''
+  adminToken.value = localStorage.getItem('adminToken') || ''
   fetchQuizzes()
 })
 
 function logout() {
+  localStorage.removeItem('adminToken')
   localStorage.removeItem('adminId')
   localStorage.removeItem('adminUsername')
   router.push('/admin/login')
@@ -31,32 +35,27 @@ const showEditDialog = ref(false)
 const showDeleteDialog = ref(false)
 
 async function fetchQuizzes() {
-  if (!adminId.value) return
-  const { data } = await supabase
-    .from('quizzes')
-    .select('*, questions(count), participants(count)')
-    .eq('admin_id', adminId.value)
-    .order('created_at', { ascending: false })
-  quizzes.value = data || []
+  if (!adminToken.value) return
+  try {
+    quizzes.value = await $fetch('/api/admin/quizzes', { headers: authHeaders() })
+  } catch {
+    quizzes.value = []
+  }
 }
 
 async function createQuiz() {
   if (!newQuizTitle.value) return
-  const insertData: any = { title: newQuizTitle.value, description: '', admin_id: adminId.value }
-  if (newQuizCode.value.trim()) {
-    insertData.code = newQuizCode.value.trim().toUpperCase().slice(0, 4)
-  }
-  const { data, error } = await supabase
-    .from('quizzes')
-    .insert(insertData)
-    .select()
-    .single()
-  if (!error && data) {
+  try {
+    const data = await $fetch('/api/admin/quizzes', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: { title: newQuizTitle.value, code: newQuizCode.value.trim() },
+    })
     newQuizTitle.value = ''
     newQuizCode.value = ''
     showCreateDialog.value = false
     router.push(`/admin/quiz/${data.id}`)
-  }
+  } catch {}
 }
 
 function openEdit(quiz: any) {
@@ -67,15 +66,15 @@ function openEdit(quiz: any) {
 
 async function saveEdit() {
   if (!editQuizTitle.value) return
-  const { error } = await supabase
-    .from('quizzes')
-    .update({ title: editQuizTitle.value })
-    .eq('id', editQuizId.value)
-    .eq('admin_id', adminId.value)
-  if (!error) {
+  try {
+    await $fetch(`/api/admin/quizzes/${editQuizId.value}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: { title: editQuizTitle.value },
+    })
     showEditDialog.value = false
     await fetchQuizzes()
-  }
+  } catch {}
 }
 
 function openDelete(quizId: string) {
@@ -84,13 +83,15 @@ function openDelete(quizId: string) {
 }
 
 async function confirmDelete() {
-  const { error } = await supabase.from('quizzes').delete().eq('id', deleteQuizId.value).eq('admin_id', adminId.value)
-  if (!error) {
+  try {
+    await $fetch(`/api/admin/quizzes/${deleteQuizId.value}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
     showDeleteDialog.value = false
     await fetchQuizzes()
-  }
+  } catch {}
 }
-
 </script>
 
 <template>

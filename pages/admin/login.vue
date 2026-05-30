@@ -23,6 +23,7 @@ async function handleSubmit() {
       body: { username: username.value, password: password.value }
     })
 
+    localStorage.setItem('adminToken', result.token)
     localStorage.setItem('adminId', result.id)
     localStorage.setItem('adminUsername', result.username)
     router.push('/admin')

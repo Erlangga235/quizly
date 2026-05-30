@@ -2,10 +2,16 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+definePageMeta({ middleware: 'admin-auth' })
+
 const route = useRoute()
 const router = useRouter()
 const quizId = route.params.id as string
-const supabase = useSupabaseClient()
+const adminToken = ref('')
+
+function authHeaders() {
+  return { Authorization: `Bearer ${adminToken.value}` }
+}
 
 const quiz = ref(null)
 const questions = ref([])
@@ -52,49 +58,38 @@ const deleteQuestionId = ref('')
 const codeCopied = ref(false)
 
 async function fetchQuiz() {
-  const { data: qData } = await supabase.from('quizzes').select('*').eq('id', quizId).single()
-  quiz.value = qData
-
-  const { data: qstData } = await supabase
-    .from('questions')
-    .select('*, options(*)')
-    .eq('quiz_id', quizId)
-    .order('created_at')
-  questions.value = qstData || []
+  try {
+    const data = await $fetch(`/api/admin/quizzes/${quizId}`, { headers: authHeaders() })
+    quiz.value = data.quiz
+    questions.value = data.questions || []
+  } catch {
+    router.push('/admin')
+  }
 }
 
 async function fetchParticipants() {
-  const { data } = await supabase
-    .from('participants')
-    .select('*')
-    .eq('quiz_id', quizId)
-    .order('score', { ascending: false })
-  participants.value = data || []
+  try {
+    participants.value = await $fetch(`/api/admin/quizzes/${quizId}/participants`, { headers: authHeaders() })
+  } catch {
+    participants.value = []
+  }
 }
 
 async function addQuestion() {
   if (!newQuestionText.value) return
-
-  const { data: qst, error } = await supabase
-    .from('questions')
-    .insert({ quiz_id: quizId, text: newQuestionText.value, time_limit: newQuestionTime.value })
-    .select()
-    .single()
-
-  if (!error && qst) {
-    const optsToInsert = options.value.filter(o => o.text).map(o => ({
-      question_id: qst.id,
-      text: o.text,
-      is_correct: o.is_correct
-    }))
-
-    if (optsToInsert.length > 0) {
-      await supabase.from('options').insert(optsToInsert)
-    }
-
+  try {
+    await $fetch(`/api/admin/quizzes/${quizId}/questions`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: {
+        text: newQuestionText.value,
+        time_limit: newQuestionTime.value,
+        options: options.value.filter(o => o.text).map(o => ({ text: o.text, is_correct: o.is_correct })),
+      },
+    })
     resetForm()
     await fetchQuiz()
-  }
+  } catch {}
 }
 
 function openDeleteQuestion(id: string) {
@@ -103,7 +98,12 @@ function openDeleteQuestion(id: string) {
 }
 
 async function confirmDeleteQuestion() {
-  await supabase.from('questions').delete().eq('id', deleteQuestionId.value)
+  try {
+    await $fetch(`/api/admin/questions/${deleteQuestionId.value}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+  } catch {}
   showDeleteQuestionDialog.value = false
   await fetchQuiz()
 }
@@ -111,8 +111,14 @@ async function confirmDeleteQuestion() {
 async function toggleLeaderboard() {
   if (!quiz.value) return
   const newVal = !quiz.value.is_leaderboard_visible
-  await supabase.from('quizzes').update({ is_leaderboard_visible: newVal }).eq('id', quizId)
-  quiz.value.is_leaderboard_visible = newVal
+  try {
+    await $fetch(`/api/admin/quizzes/${quizId}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: { is_leaderboard_visible: newVal },
+    })
+    quiz.value.is_leaderboard_visible = newVal
+  } catch {}
 }
 
 async function copyQuizCode() {
@@ -141,6 +147,7 @@ const avgScore = computed(() => {
 })
 
 onMounted(() => {
+  adminToken.value = localStorage.getItem('adminToken') || ''
   fetchQuiz()
   fetchParticipants()
 })
