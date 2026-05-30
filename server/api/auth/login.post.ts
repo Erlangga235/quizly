@@ -1,5 +1,8 @@
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { createHash } from 'node:crypto'
+import { signSession } from '~/server/utils/session'
+
+const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -9,7 +12,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Username dan password wajib diisi.' })
   }
 
-  const supabase = await serverSupabaseClient(event)
+  const supabase = serverSupabaseServiceRole(event)
 
   const { data: admin } = await supabase
     .from('admins')
@@ -21,7 +24,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Username atau password salah.' })
   }
 
-  // Verify password
   const [salt, storedHash] = (admin as any).password_hash.split(':')
   const inputHash = createHash('sha256').update(password + salt).digest('hex')
 
@@ -29,5 +31,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Username atau password salah.' })
   }
 
-  return { id: (admin as any).id, username: (admin as any).username }
+  const authSecret = useRuntimeConfig(event).authSecret
+  const token = signSession(
+    { sub: (admin as any).id, username: (admin as any).username },
+    authSecret,
+    TOKEN_TTL_SECONDS
+  )
+
+  return { token, id: (admin as any).id, username: (admin as any).username }
 })

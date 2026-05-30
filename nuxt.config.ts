@@ -39,6 +39,9 @@ export default defineNuxtConfig({
       extensions: ['.vue'],
     }
   ],
+  runtimeConfig: {
+    authSecret: process.env.AUTH_SECRET,
+  },
   supabase: {
     redirect: false
   }

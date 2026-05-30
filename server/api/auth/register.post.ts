@@ -1,5 +1,8 @@
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { createHash, randomBytes } from 'node:crypto'
+import { signSession } from '~/server/utils/session'
+
+const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -8,18 +11,15 @@ export default defineEventHandler(async (event) => {
   if (!username || !password) {
     throw createError({ statusCode: 400, statusMessage: 'Username dan password wajib diisi.' })
   }
-
   if (username.length < 3) {
     throw createError({ statusCode: 400, statusMessage: 'Username minimal 3 karakter.' })
   }
-
   if (password.length < 6) {
     throw createError({ statusCode: 400, statusMessage: 'Password minimal 6 karakter.' })
   }
 
-  const supabase = await serverSupabaseClient(event)
+  const supabase = serverSupabaseServiceRole(event)
 
-  // Check if username already exists
   const { data: existing } = await supabase
     .from('admins')
     .select('id')
@@ -30,7 +30,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'Username sudah dipakai.' })
   }
 
-  // Hash password with salt
   const salt = randomBytes(16).toString('hex')
   const hash = createHash('sha256').update(password + salt).digest('hex')
   const password_hash = `${salt}:${hash}`
@@ -45,5 +44,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Gagal membuat akun.' })
   }
 
-  return { id: (data as any).id, username: (data as any).username }
+  const authSecret = useRuntimeConfig(event).authSecret
+  const token = signSession(
+    { sub: (data as any).id, username: (data as any).username },
+    authSecret,
+    TOKEN_TTL_SECONDS
+  )
+
+  return { token, id: (data as any).id, username: (data as any).username }
 })
