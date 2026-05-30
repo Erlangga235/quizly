@@ -12,15 +12,26 @@ begin
 end;
 $$ language plpgsql;
 
+-- 5. Admins Table (must exist before quizzes references it)
+create table admins (
+  id uuid default gen_random_uuid() primary key,
+  username text unique not null,
+  password_hash text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- 1. Quizzes Table
 create table quizzes (
   id uuid default gen_random_uuid() primary key,
   code text unique default generate_quiz_code() not null,
   title text not null,
   description text,
+  admin_id uuid references admins(id) on delete cascade,
   is_leaderboard_visible boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+create index idx_quizzes_admin_id on quizzes(admin_id);
 
 -- 2. Questions Table
 create table questions (

@@ -7,9 +7,12 @@ definePageMeta({ middleware: 'admin-auth' })
 const router = useRouter()
 const supabase = useSupabaseClient()
 const adminUsername = ref('')
+const adminId = ref('')
 
 onMounted(() => {
   adminUsername.value = localStorage.getItem('adminUsername') || 'Admin'
+  adminId.value = localStorage.getItem('adminId') || ''
+  fetchQuizzes()
 })
 
 function logout() {
@@ -28,16 +31,18 @@ const showEditDialog = ref(false)
 const showDeleteDialog = ref(false)
 
 async function fetchQuizzes() {
+  if (!adminId.value) return
   const { data } = await supabase
     .from('quizzes')
     .select('*, questions(count), participants(count)')
+    .eq('admin_id', adminId.value)
     .order('created_at', { ascending: false })
   quizzes.value = data || []
 }
 
 async function createQuiz() {
   if (!newQuizTitle.value) return
-  const insertData: any = { title: newQuizTitle.value, description: '' }
+  const insertData: any = { title: newQuizTitle.value, description: '', admin_id: adminId.value }
   if (newQuizCode.value.trim()) {
     insertData.code = newQuizCode.value.trim().toUpperCase().slice(0, 4)
   }
@@ -66,6 +71,7 @@ async function saveEdit() {
     .from('quizzes')
     .update({ title: editQuizTitle.value })
     .eq('id', editQuizId.value)
+    .eq('admin_id', adminId.value)
   if (!error) {
     showEditDialog.value = false
     await fetchQuizzes()
@@ -78,16 +84,13 @@ function openDelete(quizId: string) {
 }
 
 async function confirmDelete() {
-  const { error } = await supabase.from('quizzes').delete().eq('id', deleteQuizId.value)
+  const { error } = await supabase.from('quizzes').delete().eq('id', deleteQuizId.value).eq('admin_id', adminId.value)
   if (!error) {
     showDeleteDialog.value = false
     await fetchQuizzes()
   }
 }
 
-onMounted(() => {
-  fetchQuizzes()
-})
 </script>
 
 <template>
