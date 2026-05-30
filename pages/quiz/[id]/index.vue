@@ -5,7 +5,6 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 const quizId = route.params.id as string
-const supabase = useSupabaseClient()
 
 const questions = ref([])
 const currentIndex = ref(0)
@@ -38,11 +37,12 @@ const progress = computed(() => questions.value.length > 0 ? ((currentIndex.valu
 onMounted(async () => {
   participantName.value = localStorage.getItem('participantName') || 'Anonim'
 
-  const { data } = await supabase
-    .from('questions')
-    .select('*, options(*)')
-    .eq('quiz_id', quizId)
-    .order('created_at')
+  let data: any[] = []
+  try {
+    data = await $fetch(`/api/play/${quizId}/questions`)
+  } catch {
+    data = []
+  }
 
   if (data && data.length > 0) {
     questions.value = data
@@ -116,12 +116,16 @@ async function nextQuestion() {
 }
 
 async function finishQuiz() {
-  const { data, error } = await supabase.from('participants').insert({
-    quiz_id: quizId,
-    name: participantName.value,
-    score: score.value,
-    finished_at: new Date().toISOString()
-  }).select().single()
+  let data: any = null
+  let error: any = null
+  try {
+    data = await $fetch(`/api/play/${quizId}/finish`, {
+      method: 'POST',
+      body: { name: participantName.value, score: score.value },
+    })
+  } catch (e) {
+    error = e
+  }
 
   if (!error && data) {
     localStorage.setItem('participantId', data.id)

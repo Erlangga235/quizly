@@ -15,7 +15,12 @@ onMounted(async () => {
   const pId = localStorage.getItem('participantId')
   
   // Fetch Quiz & Participant
-  const { data: qData } = await supabase.from('quizzes').select('*').eq('id', quizId).single()
+  let qData: any = null
+  try {
+    const res = await $fetch(`/api/play/${quizId}/result`)
+    qData = res.quiz
+    leaderboard.value = res.leaderboard
+  } catch {}
   quiz.value = qData
   
   if (pId) {
@@ -36,13 +41,14 @@ onUnmounted(() => {
 })
 
 async function fetchLeaderboard() {
-  const { data } = await supabase
-    .from('participants')
-    .select('*')
-    .eq('quiz_id', quizId)
-    .order('score', { ascending: false })
-    .limit(10)
-    
+  let data: any[] = []
+  try {
+    const res = await $fetch(`/api/play/${quizId}/result`)
+    data = res.leaderboard
+  } catch {
+    data = []
+  }
+
   leaderboard.value = data || []
 }
 

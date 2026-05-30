@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const supabase = useSupabaseClient()
 const code = ref('')
 const name = ref('')
 const isJoining = ref(false)
@@ -14,11 +13,16 @@ async function joinQuiz() {
   isJoining.value = true
   errorMsg.value = ''
 
-  const { data, error } = await supabase
-    .from('quizzes')
-    .select('id')
-    .eq('code', code.value.toUpperCase().trim())
-    .single()
+  let data: any = null
+  let error: any = null
+  try {
+    data = await $fetch('/api/play/join', {
+      method: 'POST',
+      body: { code: code.value.toUpperCase().trim() },
+    })
+  } catch (e) {
+    error = e
+  }
 
   if (error || !data) {
     errorMsg.value = 'Kode kuis tidak ditemukan.'
