@@ -35,35 +35,58 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="flex items-center justify-center min-h-dvh p-4">
-    <div class="w-full max-w-sm space-y-8">
-      <!-- Header -->
-      <div class="text-center space-y-2">
-        <NuxtLink to="/" class="text-xs text-slate-400 hover:text-violet-600 transition-colors">&larr; Beranda</NuxtLink>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">
-          {{ mode === 'login' ? 'Masuk Admin' : 'Buat Akun Admin' }}
-        </h1>
-        <p class="text-slate-500 text-sm">
-          {{ mode === 'login' ? 'Masuk untuk mengelola kuis Anda.' : 'Daftar akun baru untuk membuat kuis.' }}
-        </p>
-      </div>
+  <!-- Full-viewport centering — single column, scrollable on small heights -->
+  <div class="flex flex-col items-center justify-center min-h-dvh p-4 gap-6">
 
-      <!-- Form Card -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-slate-900/[0.04] border border-slate-200/60 p-6">
-        <form @submit.prevent="handleSubmit" class="space-y-4">
+    <!-- Auth card (max-w-sm keeps it narrow on all viewports → single-column mobile) -->
+    <UiCard class="w-full max-w-sm shadow-lg">
+      <div class="p-6 space-y-6">
+
+        <!-- BrandMark + back link -->
+        <div class="flex flex-col items-center gap-4">
+          <NuxtLink
+            to="/"
+            class="self-start text-xs text-muted-foreground hover:text-accent transition-colors"
+            style="transition-duration: var(--motion-base); transition-timing-function: var(--ease-standard);"
+          >
+            &larr; Beranda
+          </NuxtLink>
+
+          <BrandMark size="md" class="mx-auto" />
+        </div>
+
+        <!-- Mode-dependent heading & description -->
+        <div class="text-center space-y-1">
+          <h1
+            class="text-foreground font-extrabold tracking-tight"
+            style="font-size: var(--text-h1-size); line-height: var(--text-h1-lh); font-weight: var(--text-h1-weight);"
+          >
+            {{ mode === 'login' ? 'Masuk Admin' : 'Buat Akun Admin' }}
+          </h1>
+          <p class="text-muted-foreground text-sm">
+            {{ mode === 'login' ? 'Masuk untuk mengelola kuis Anda.' : 'Daftar akun baru untuk membuat kuis.' }}
+          </p>
+        </div>
+
+        <!-- Form -->
+        <form @submit.prevent="handleSubmit" class="space-y-4" novalidate>
+
+          <!-- Username field -->
           <div class="space-y-1.5">
-            <UiLabel for="username" class="text-sm font-semibold text-slate-700">Username</UiLabel>
+            <UiLabel for="username">Username</UiLabel>
             <UiInput
               id="username"
               v-model="username"
               placeholder="Masukkan username"
               required
               autocomplete="username"
-              class="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white placeholder:text-slate-400 text-base transition-colors"
+              class="h-12 text-base"
             />
           </div>
+
+          <!-- Password field -->
           <div class="space-y-1.5">
-            <UiLabel for="password" class="text-sm font-semibold text-slate-700">Password</UiLabel>
+            <UiLabel for="password">Password</UiLabel>
             <UiInput
               id="password"
               v-model="password"
@@ -71,36 +94,56 @@ async function handleSubmit() {
               placeholder="Masukkan password"
               required
               autocomplete="current-password"
-              class="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white placeholder:text-slate-400 text-base transition-colors"
+              class="h-12 text-base"
             />
           </div>
 
-          <p v-if="errorMsg" class="text-sm font-semibold text-red-500">{{ errorMsg }}</p>
+          <!-- Error message -->
+          <p
+            v-if="errorMsg"
+            role="alert"
+            class="text-sm font-semibold text-destructive"
+          >
+            {{ errorMsg }}
+          </p>
 
+          <!-- Submit button -->
           <UiButton
             type="submit"
             :disabled="isLoading || !username || !password"
-            class="w-full h-12 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-700 hover:to-fuchsia-600 text-white font-bold text-base shadow-lg shadow-violet-500/25 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full h-12 text-base font-bold"
           >
             <span v-if="isLoading" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <!-- Spinner -->
+              <svg
+                class="animate-spin w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25" />
                 <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75" />
               </svg>
+              <span class="sr-only">Memuat…</span>
             </span>
             <span v-else>{{ mode === 'login' ? 'Masuk' : 'Buat Akun' }}</span>
           </UiButton>
         </form>
 
-        <div class="mt-4 text-center">
+        <!-- Mode toggle — clears error via inline handler (preserved from original) -->
+        <div class="text-center">
           <button
+            type="button"
             @click="mode = mode === 'login' ? 'register' : 'login'; errorMsg = ''"
-            class="text-sm text-slate-500 hover:text-violet-600 transition-colors"
+            class="text-sm text-muted-foreground hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            style="transition-duration: var(--motion-base); transition-timing-function: var(--ease-standard);"
           >
             {{ mode === 'login' ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk' }}
           </button>
         </div>
+
       </div>
-    </div>
+    </UiCard>
+
   </div>
 </template>

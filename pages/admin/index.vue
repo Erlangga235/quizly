@@ -95,143 +95,237 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-      <div>
-        <NuxtLink to="/" class="text-xs text-slate-400 hover:text-violet-600 transition-colors mb-1 block">&larr; Beranda</NuxtLink>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Dashboard Admin</h1>
-        <p class="text-slate-500 text-sm mt-1">Halo, <span class="font-bold text-slate-700">{{ adminUsername }}</span>! Kelola kuis Anda di sini.</p>
+  <div class="min-h-screen bg-background">
+
+    <!-- ── Header bar ──────────────────────────────────────────────────── -->
+    <header class="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-sm shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+        <!-- Brand + greeting -->
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Quizly wordmark tile -->
+          <div class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center [background:var(--gradient-brand)] shadow-brand">
+            <span class="text-accent text-sm font-black font-display tracking-tight leading-none">Q</span>
+          </div>
+          <div class="min-w-0 hidden sm:block">
+            <p class="text-xs text-muted-foreground leading-none mb-0.5">Dashboard</p>
+            <p class="text-sm font-semibold text-foreground truncate">
+              Halo, <span class="text-accent">{{ adminUsername }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2 shrink-0">
+          <!-- Keluar button -->
+          <UiButton
+            variant="ghost"
+            size="sm"
+            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            @click="logout"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Keluar</span>
+          </UiButton>
+
+          <!-- + Buat Kuis Baru — Create dialog trigger -->
+          <UiDialog v-model:open="showCreateDialog">
+            <UiDialogTrigger as-child>
+              <UiButton class="gap-1.5">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <span>Buat Kuis Baru</span>
+              </UiButton>
+            </UiDialogTrigger>
+
+            <!-- Create quiz dialog content -->
+            <UiDialogContent>
+              <UiDialogHeader>
+                <UiDialogTitle>Buat Kuis Baru</UiDialogTitle>
+                <UiDialogDescription>Masukkan judul untuk kuis baru Anda.</UiDialogDescription>
+              </UiDialogHeader>
+
+              <div class="py-4 space-y-4">
+                <div class="space-y-1.5">
+                  <UiLabel for="new-quiz-title">Judul Kuis</UiLabel>
+                  <UiInput
+                    id="new-quiz-title"
+                    v-model="newQuizTitle"
+                    placeholder="Cth. Dasar-dasar JavaScript"
+                    @keyup.enter="createQuiz"
+                  />
+                </div>
+                <div class="space-y-1.5">
+                  <UiLabel for="new-quiz-code">Kode Kuis (4 karakter)</UiLabel>
+                  <UiInput
+                    id="new-quiz-code"
+                    v-model="newQuizCode"
+                    placeholder="Kosongkan untuk auto-generate"
+                    maxlength="4"
+                    class="font-mono uppercase tracking-widest text-center"
+                  />
+                  <p class="text-xs text-muted-foreground">Opsional. Huruf &amp; angka saja. Jika kosong akan dibuat otomatis.</p>
+                </div>
+              </div>
+
+              <UiDialogFooter>
+                <UiButton variant="outline" @click="showCreateDialog = false">Batal</UiButton>
+                <UiButton @click="createQuiz">Buat</UiButton>
+              </UiDialogFooter>
+            </UiDialogContent>
+          </UiDialog>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Main content ────────────────────────────────────────────────── -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+      <!-- Page title row -->
+      <div class="mb-8">
+        <h1 class="text-2xl font-extrabold text-foreground tracking-tight">Kuis Saya</h1>
+        <p class="text-sm text-muted-foreground mt-1">Kelola semua kuis Anda dari sini.</p>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button @click="logout" class="text-sm font-semibold text-slate-500 hover:text-red-500 transition-colors px-2">Keluar</button>
-        <UiDialog v-model:open="showCreateDialog">
-          <UiDialogTrigger as-child>
-            <UiButton class="h-11 px-5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-700 hover:to-fuchsia-600 text-white font-semibold shadow-lg shadow-violet-500/20 transition-all duration-200 active:scale-[0.98]">
-              + Buat Kuis Baru
-            </UiButton>
-          </UiDialogTrigger>
-        <UiDialogContent class="rounded-2xl">
-          <UiDialogHeader>
-            <UiDialogTitle class="text-xl font-bold">Buat Kuis Baru</UiDialogTitle>
-            <UiDialogDescription class="text-slate-500">Masukkan judul untuk kuis baru Anda.</UiDialogDescription>
-          </UiDialogHeader>
-          <div class="py-4 space-y-4">
-            <div>
-              <UiLabel class="text-sm font-semibold text-slate-700">Judul Kuis</UiLabel>
-              <UiInput
-                v-model="newQuizTitle"
-                placeholder="Cth. Dasar-dasar JavaScript"
-                @keyup.enter="createQuiz"
-                class="mt-1.5 h-11 rounded-xl"
-              />
+      <!-- ── Quiz cards grid ───────────────────────────────────────────── -->
+      <div v-if="quizzes.length > 0" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <UiCard
+          v-for="quiz in quizzes"
+          :key="quiz.id"
+          class="group flex flex-col p-5 gap-0 transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)] hover:shadow-brand hover:border-accent/40"
+        >
+          <!-- Card header: title + action buttons -->
+          <div class="flex items-start justify-between gap-2 mb-4">
+            <h3
+              class="font-bold text-foreground leading-snug line-clamp-2"
+              style="font-size: var(--text-h3-size); line-height: var(--text-h3-lh);"
+            >
+              {{ quiz.title }}
+            </h3>
+            <div class="flex gap-1 shrink-0">
+              <button
+                @click="openEdit(quiz)"
+                class="p-1.5 rounded-md text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                aria-label="Edit kuis"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button
+                @click="openDelete(quiz.id)"
+                class="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                aria-label="Hapus kuis"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
             </div>
-            <div>
-              <UiLabel class="text-sm font-semibold text-slate-700">Kode Kuis (4 karakter)</UiLabel>
-              <UiInput
-                v-model="newQuizCode"
-                placeholder="Kosongkan untuk auto-generate"
-                maxlength="4"
-                class="mt-1.5 h-11 rounded-xl font-mono uppercase tracking-widest text-center text-lg"
-              />
-              <p class="text-[11px] text-slate-400 mt-1">Opsional. Huruf & angka saja. Jika kosong akan dibuat otomatis.</p>
+          </div>
+
+          <!-- Stats badges -->
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="inline-flex items-center gap-1 text-xs font-semibold text-accent bg-accent/10 border border-accent/20 px-2.5 py-1 rounded-[var(--radius-pill)]">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              {{ quiz.questions?.[0]?.count ?? 0 }} Soal
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-muted border border-border px-2.5 py-1 rounded-[var(--radius-pill)]">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+              {{ quiz.participants?.[0]?.count ?? 0 }} Peserta
+            </span>
+          </div>
+
+          <!-- Code + date + manage button -->
+          <div class="mt-auto flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <code class="font-mono font-bold text-accent text-sm bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-[var(--radius-sm)] tracking-widest tabular-nums">
+                {{ quiz.code }}
+              </code>
+              <span class="text-xs text-muted-foreground truncate">
+                {{ new Date(quiz.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+              </span>
             </div>
+            <NuxtLink :to="`/admin/quiz/${quiz.id}`" class="shrink-0">
+              <UiButton size="sm" class="gap-1">
+                <span>Kelola</span>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+                </svg>
+              </UiButton>
+            </NuxtLink>
           </div>
-          <UiDialogFooter>
-            <UiButton variant="outline" @click="showCreateDialog = false" class="rounded-xl">Batal</UiButton>
-            <UiButton @click="createQuiz" class="rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-semibold">Buat</UiButton>
-          </UiDialogFooter>
-        </UiDialogContent>
-      </UiDialog>
+        </UiCard>
       </div>
-    </div>
 
-    <!-- Quiz Cards Grid -->
-    <div v-if="quizzes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div
-        v-for="quiz in quizzes"
-        :key="quiz.id"
-        class="group bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md hover:border-violet-200 transition-all duration-200"
-      >
-        <div class="flex items-start justify-between mb-4">
-          <h3 class="font-bold text-slate-800 text-lg leading-snug line-clamp-2">{{ quiz.title }}</h3>
-          <div class="flex gap-1 shrink-0 ml-2">
-            <button @click="openEdit(quiz)" class="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors" aria-label="Edit kuis">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-            <button @click="openDelete(quiz.id)" class="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" aria-label="Hapus kuis">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-            </button>
-          </div>
+      <!-- ── Empty state ───────────────────────────────────────────────── -->
+      <div v-else class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="w-16 h-16 rounded-[var(--radius-xl)] bg-muted border border-border flex items-center justify-center mb-5 shadow-md">
+          <svg class="w-8 h-8 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
         </div>
-
-        <div class="flex gap-3 mb-4">
-          <span class="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            {{ quiz.questions?.[0]?.count ?? 0 }} Soal
-          </span>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold text-fuchsia-600 bg-fuchsia-50 px-2.5 py-1 rounded-full">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            {{ quiz.participants?.[0]?.count ?? 0 }} Peserta
-          </span>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <code class="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md tracking-wider">{{ quiz.code }}</code>
-            <span class="text-[11px] text-slate-400">{{ new Date(quiz.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}</span>
-          </div>
-          <NuxtLink :to="`/admin/quiz/${quiz.id}`">
-            <UiButton size="sm" class="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all active:scale-[0.97]">
-              Kelola →
-            </UiButton>
-          </NuxtLink>
-        </div>
+        <h3 class="text-lg font-bold text-foreground mb-2">Belum ada kuis</h3>
+        <p class="text-sm text-muted-foreground max-w-xs">Buat kuis pertama Anda dengan menekan tombol "Buat Kuis Baru" di atas.</p>
       </div>
-    </div>
+    </main>
 
-    <!-- Empty State -->
-    <div v-else class="flex flex-col items-center justify-center py-20 text-center">
-      <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-        <svg class="w-8 h-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-      </div>
-      <h3 class="text-lg font-bold text-slate-700 mb-1">Belum ada kuis</h3>
-      <p class="text-slate-400 text-sm max-w-xs">Buat kuis pertama Anda dengan menekan tombol di atas.</p>
-    </div>
-
-    <!-- Edit Dialog -->
+    <!-- ── Edit dialog ─────────────────────────────────────────────────── -->
     <UiDialog v-model:open="showEditDialog">
-      <UiDialogContent class="rounded-2xl">
+      <UiDialogContent>
         <UiDialogHeader>
-          <UiDialogTitle class="text-xl font-bold">Edit Kuis</UiDialogTitle>
-          <UiDialogDescription class="text-slate-500">Ubah judul kuis di bawah ini.</UiDialogDescription>
+          <UiDialogTitle>Edit Kuis</UiDialogTitle>
+          <UiDialogDescription>Ubah judul kuis di bawah ini.</UiDialogDescription>
         </UiDialogHeader>
-        <div class="py-4">
-          <UiLabel class="text-sm font-semibold text-slate-700">Judul Kuis</UiLabel>
-          <UiInput v-model="editQuizTitle" @keyup.enter="saveEdit" class="mt-1.5 h-11 rounded-xl" />
+
+        <div class="py-4 space-y-1.5">
+          <UiLabel for="edit-quiz-title">Judul Kuis</UiLabel>
+          <UiInput
+            id="edit-quiz-title"
+            v-model="editQuizTitle"
+            @keyup.enter="saveEdit"
+          />
         </div>
+
         <UiDialogFooter>
-          <UiButton variant="outline" @click="showEditDialog = false" class="rounded-xl">Batal</UiButton>
-          <UiButton @click="saveEdit" class="rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-semibold">Simpan</UiButton>
+          <UiButton variant="outline" @click="showEditDialog = false">Batal</UiButton>
+          <UiButton @click="saveEdit">Simpan</UiButton>
         </UiDialogFooter>
       </UiDialogContent>
     </UiDialog>
 
-    <!-- Delete Confirmation -->
+    <!-- ── Delete confirmation alert dialog ───────────────────────────── -->
     <UiAlertDialog v-model:open="showDeleteDialog">
-      <UiAlertDialogContent class="rounded-2xl">
+      <UiAlertDialogContent>
         <UiAlertDialogHeader>
-          <UiAlertDialogTitle class="text-xl font-bold">Hapus Kuis?</UiAlertDialogTitle>
-          <UiAlertDialogDescription class="text-slate-500">
+          <UiAlertDialogTitle>Hapus Kuis?</UiAlertDialogTitle>
+          <UiAlertDialogDescription>
             Tindakan ini tidak bisa dibatalkan. Semua pertanyaan dan data peserta juga akan dihapus permanen.
           </UiAlertDialogDescription>
         </UiAlertDialogHeader>
         <UiAlertDialogFooter>
-          <UiAlertDialogCancel @click="showDeleteDialog = false" class="rounded-xl">Batal</UiAlertDialogCancel>
-          <UiAlertDialogAction @click="confirmDelete" class="rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold">Ya, Hapus</UiAlertDialogAction>
+          <UiAlertDialogCancel @click="showDeleteDialog = false">Batal</UiAlertDialogCancel>
+          <UiAlertDialogAction
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/40"
+            @click="confirmDelete"
+          >
+            Ya, Hapus
+          </UiAlertDialogAction>
         </UiAlertDialogFooter>
       </UiAlertDialogContent>
     </UiAlertDialog>
+
   </div>
 </template>

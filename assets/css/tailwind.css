@@ -4,26 +4,144 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 261 100% 36%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 300 37% 98%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 261 100% 36%;
-    --radius: 1rem;
+    /* ─── Color tokens (HSL channels — used as hsl(var(--token))) ─── */
+
+    /* Surfaces */
+    --background: 150 14% 5%;
+    --foreground: 150 8% 95%;
+
+    --card: 150 12% 8%;
+    --card-foreground: 150 8% 95%;
+
+    --popover: 150 12% 8%;
+    --popover-foreground: 150 8% 95%;
+
+    /* Brand / primary actions */
+    --primary: 150 12% 11%;
+    --primary-foreground: 150 8% 96%;
+    --brand: 150 14% 8%;
+
+    /* Green anchor — highlights, focus, selected/active */
+    --accent: 152 64% 44%;
+    --accent-foreground: 150 40% 6%;
+
+    --accent-2: 152 64% 44%;
+    --accent-2-foreground: 150 40% 6%;
+
+    /* Low-emphasis / muted */
+    --secondary: 150 10% 15%;
+    --secondary-foreground: 150 8% 92%;
+
+    --muted: 150 10% 13%;
+    --muted-foreground: 150 7% 66%;
+
+    /* Semantic states */
+    --success: 122 55% 50%;
+    --success-foreground: 150 40% 6%;
+
+    --warning: 38 95% 55%;
+    --warning-foreground: 40 40% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Chrome */
+    --border: 150 10% 18%;
+    --input: 150 10% 20%;
+    --ring: 152 64% 44%;
+
+    /* ─── Gradient token ─── */
+    --gradient-brand: linear-gradient(
+      135deg,
+      hsl(var(--brand)) 0%,
+      hsl(var(--brand)) 55%,
+      hsl(var(--accent-2)) 100%
+    );
+
+    /* ─── Typography tokens ─── */
+
+    --font-display: "Clash Display", "Quicksand", sans-serif;
+    --font-sans: "Quicksand", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Space Mono", ui-monospace, "SFMono-Regular", monospace;
+
+    /* Type scale — size / line-height / weight */
+    --text-display-size: clamp(2.5rem, 6vw, 3.75rem);
+    --text-display-lh: 1.05;
+    --text-display-weight: 800;
+
+    --text-h1-size: 1.875rem;
+    --text-h1-lh: 1.15;
+    --text-h1-weight: 800;
+
+    --text-h2-size: 1.25rem;
+    --text-h2-lh: 1.25;
+    --text-h2-weight: 700;
+
+    --text-h3-size: 1.05rem;
+    --text-h3-lh: 1.3;
+    --text-h3-weight: 700;
+
+    --text-body-size: 1rem;
+    --text-body-lh: 1.6;
+    --text-body-weight: 500;
+
+    --text-sm-size: 0.8125rem;
+    --text-sm-lh: 1.4;
+    --text-sm-weight: 600;
+
+    /* ─── Spacing ramp (4px base: 4,8,12,16,20,24,32,40,48,56,60,64px) ─── */
+    --space-1: 0.25rem;   /* 4px  */
+    --space-2: 0.5rem;    /* 8px  */
+    --space-3: 0.75rem;   /* 12px */
+    --space-4: 1rem;      /* 16px */
+    --space-5: 1.25rem;   /* 20px */
+    --space-6: 1.5rem;    /* 24px */
+    --space-7: 2rem;      /* 32px */
+    --space-8: 2.5rem;    /* 40px */
+    --space-9: 3rem;      /* 48px */
+    --space-10: 3.5rem;   /* 56px */
+    --space-11: 3.75rem;  /* 60px */
+    --space-12: 4rem;     /* 64px */
+
+    /* ─── Radius scale ─── */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-pill: 9999px;
+    --radius: var(--radius-lg); /* legacy alias — maps to --radius-lg */
+
+    /* ─── Elevation (shadows) ─── */
+    --shadow-sm: 0 1px 2px 0 hsl(150 14% 3% / 0.5);
+    --shadow-md: 0 4px 16px 0 hsl(150 14% 3% / 0.6);
+    --shadow-lg: 0 8px 32px 0 hsl(150 14% 3% / 0.7);
+    --shadow-brand: 0 0 0 1px hsl(152 64% 44% / 0.3), 0 4px 24px 0 hsl(152 64% 44% / 0.15);
+
+    /* ─── Motion tokens ─── */
+    --motion-fast: 120ms;
+    --motion-base: 200ms;
+    --motion-slow: 400ms;
+
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+/* ─── Reduced-motion guard (Requirement 11.5) ─────────────────────────────
+   When the user's OS/browser signals prefers-reduced-motion, collapse all
+   transition and animation durations to 1ms so non-essential motion
+   disappears without fully disabling CSS transitions (which would break
+   state changes that rely on transition-end events).
+──────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

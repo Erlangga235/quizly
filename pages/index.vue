@@ -36,72 +36,106 @@ async function joinQuiz() {
 </script>
 
 <template>
+  <!-- Full-viewport centering with single-column layout (Req 9.2) -->
   <div class="flex items-center justify-center min-h-dvh p-4">
     <div class="w-full max-w-sm space-y-8">
-      <!-- Hero -->
-      <div class="text-center space-y-3">
-        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-lg shadow-violet-500/25 mb-2">
-          <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-          </svg>
+
+      <!-- ── Hero ── (Req 3.1, 2.3, 2.5) -->
+      <div class="text-center space-y-4">
+        <!-- BrandMark: icon tile + gradient wordmark using design tokens -->
+        <div class="flex justify-center mb-2">
+          <BrandMark size="lg" />
         </div>
-        <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-transparent">
-          Quizly
-        </h1>
-        <p class="text-slate-500 text-base leading-relaxed">
+        <p class="text-muted-foreground text-base leading-relaxed">
           Gabung kuis langsung dan uji pengetahuanmu!
         </p>
       </div>
 
-      <!-- Join Card -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-slate-900/[0.04] border border-slate-200/60 p-6 space-y-5">
-        <form @submit.prevent="joinQuiz" class="space-y-4">
-          <div class="space-y-1.5">
-            <UiLabel for="name" class="text-sm font-semibold text-slate-700">Nama Kamu</UiLabel>
-            <UiInput
-              id="name"
-              v-model="name"
-              placeholder="Masukkan nama kamu"
-              required
-              autocomplete="name"
-              class="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white placeholder:text-slate-400 text-base transition-colors"
-            />
-          </div>
-          <div class="space-y-1.5">
-            <UiLabel for="code" class="text-sm font-semibold text-slate-700">Kode Kuis</UiLabel>
-            <UiInput
-              id="code"
-              v-model="code"
-              placeholder="ABCD"
-              required
-              maxlength="4"
-              class="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white placeholder:text-slate-400 text-xl font-mono font-bold uppercase tracking-[0.3em] text-center transition-colors"
-            />
-            <p v-if="errorMsg" class="text-xs font-semibold text-red-500 mt-1">{{ errorMsg }}</p>
-          </div>
-          <UiButton
-            type="submit"
-            :disabled="isJoining || !name || !code"
-            class="w-full h-12 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-700 hover:to-fuchsia-600 text-white font-bold text-base shadow-lg shadow-violet-500/25 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="isJoining" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25" />
-                <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75" />
-              </svg>
-              Menghubungkan...
-            </span>
-            <span v-else>Mulai Kuis</span>
-          </UiButton>
-        </form>
-      </div>
+      <!-- ── Join Card ── (Req 3.1, 3.2) -->
+      <UiCard>
+        <UiCardContent class="pt-6">
+          <form @submit.prevent="joinQuiz" class="space-y-5">
 
-      <!-- Admin Link -->
+            <!-- Name field (Req 3.2, 10.6) -->
+            <div class="space-y-2">
+              <UiLabel for="name">Nama Kamu</UiLabel>
+              <UiInput
+                id="name"
+                v-model="name"
+                placeholder="Masukkan nama kamu"
+                required
+                autocomplete="name"
+                class="h-12 text-base"
+              />
+            </div>
+
+            <!-- Quiz code field (Req 3.2, 10.6) -->
+            <div class="space-y-2">
+              <UiLabel for="code">Kode Kuis</UiLabel>
+              <UiInput
+                id="code"
+                v-model="code"
+                placeholder="ABCD"
+                required
+                maxlength="4"
+                class="h-12 text-xl text-center font-mono uppercase tracking-widest"
+                style="font-family: var(--font-mono);"
+              />
+              <!-- Error message — token-styled destructive (Req 3.5) -->
+              <p
+                v-if="errorMsg"
+                role="alert"
+                class="text-sm font-semibold text-destructive mt-1"
+              >
+                {{ errorMsg }}
+              </p>
+            </div>
+
+            <!-- Submit button ≥ h-12 = 48px (Req 9.2) -->
+            <!-- Loading state shows "Menghubungkan..." and disables (Req 3.4) -->
+            <UiButton
+              type="submit"
+              :disabled="isJoining || !name || !code"
+              class="w-full h-12 text-base font-bold"
+            >
+              <span v-if="isJoining" class="flex items-center justify-center gap-2">
+                <svg
+                  class="animate-spin w-5 h-5 flex-shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="12" cy="12" r="10"
+                    stroke="currentColor" stroke-width="3"
+                    class="opacity-25"
+                  />
+                  <path
+                    d="M4 12a8 8 0 018-8"
+                    stroke="currentColor" stroke-width="3"
+                    stroke-linecap="round"
+                    class="opacity-75"
+                  />
+                </svg>
+                Menghubungkan...
+              </span>
+              <span v-else>Mulai Kuis</span>
+            </UiButton>
+
+          </form>
+        </UiCardContent>
+      </UiCard>
+
+      <!-- ── Admin link ── (Req 3.6) -->
       <div class="text-center">
-        <NuxtLink to="/admin" class="text-sm text-slate-400 hover:text-violet-600 transition-colors">
+        <NuxtLink
+          to="/admin"
+          class="text-sm text-muted-foreground hover:text-accent transition-colors duration-[var(--motion-base)]"
+        >
           Masuk sebagai Admin →
         </NuxtLink>
       </div>
+
     </div>
   </div>
 </template>

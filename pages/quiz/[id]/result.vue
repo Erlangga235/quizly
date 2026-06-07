@@ -73,70 +73,122 @@ function subscribeToLeaderboard() {
 </script>
 
 <template>
+  <!-- Single-column mobile layout; max-w-md centers on wider screens (Req 9.2) -->
   <div class="min-h-dvh flex flex-col max-w-md mx-auto p-5">
     <div class="flex-1 flex flex-col items-center justify-center text-center space-y-6" v-if="participant">
 
-      <!-- Success Icon -->
+      <!-- Completion icon tile — brand gradient + shadow-brand (Req 8.1) -->
       <div class="relative">
-        <div class="w-20 h-20 bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-2xl flex items-center justify-center shadow-xl shadow-violet-500/25 rotate-3">
-          <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+        <div
+          class="w-20 h-20 rounded-[var(--radius-xl)] flex items-center justify-center rotate-3"
+          style="background: var(--gradient-brand); box-shadow: var(--shadow-brand);"
+        >
+          <svg
+            class="w-10 h-10 text-foreground/90"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
       </div>
 
-      <!-- Title -->
+      <!-- "Kuis Selesai!" heading + player name (Req 8.1, 8.2) -->
       <div>
-        <h1 class="text-2xl font-extrabold text-slate-900">Kuis Selesai!</h1>
-        <p class="text-slate-500 mt-1 text-sm">Kerja bagus, <span class="font-semibold text-slate-700">{{ participant.name }}</span></p>
+        <h1
+          class="text-2xl font-extrabold text-foreground"
+          style="font-family: var(--font-display);"
+        >
+          Kuis Selesai!
+        </h1>
+        <p class="text-muted-foreground mt-1 text-sm">
+          Kerja bagus, <span class="font-semibold text-foreground">{{ participant.name }}</span>
+        </p>
       </div>
 
-      <!-- Score Card -->
-      <div class="w-full bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-2xl p-6 shadow-lg shadow-violet-500/20 text-white">
-        <p class="text-xs font-bold uppercase tracking-widest opacity-70 mb-1">Skor Anda</p>
-        <p class="text-5xl font-black tabular-nums">{{ participant.score }}</p>
+      <!-- Score card — brand gradient, mono score (Req 8.1, 8.2) -->
+      <div
+        class="w-full rounded-[var(--radius-xl)] p-6"
+        style="background: var(--gradient-brand); box-shadow: var(--shadow-brand);"
+      >
+        <p
+          class="text-xs font-bold uppercase tracking-widest mb-1"
+          style="color: hsl(var(--foreground) / 0.7); font-family: var(--font-sans);"
+        >
+          Skor Anda
+        </p>
+        <p
+          class="text-5xl font-black tabular-nums text-foreground/90"
+          style="font-family: var(--font-mono);"
+        >
+          {{ participant.score }}
+        </p>
       </div>
 
-      <!-- Leaderboard -->
-      <div v-if="quiz?.is_leaderboard_visible" class="w-full">
+      <!-- Leaderboard — visible branch (Req 8.3, 8.4, 8.5, 8.6, 8.7, 11.4) -->
+      <div v-if="quiz?.is_leaderboard_visible" class="w-full text-left">
+
+        <!-- Section header + LIVE badge -->
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-bold text-slate-800">Papan Peringkat</h2>
-          <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> LIVE
+          <h2
+            class="text-base font-bold text-foreground"
+            style="font-family: var(--font-display);"
+          >
+            Papan Peringkat
+          </h2>
+          <!-- LIVE indicator — accent token colors (Req 8.7) -->
+          <span
+            class="text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 border"
+            style="
+              color: hsl(var(--accent));
+              background-color: hsl(var(--accent) / 0.15);
+              border-color: hsl(var(--accent) / 0.3);
+            "
+          >
+            <span
+              class="w-1.5 h-1.5 rounded-full animate-pulse"
+              style="background-color: hsl(var(--accent));"
+            ></span>
+            LIVE
           </span>
         </div>
-        <div class="space-y-2">
-          <div
+
+        <!-- Leaderboard rows with TransitionGroup for reorder animation (Req 11.4) -->
+        <TransitionGroup
+          tag="div"
+          class="space-y-2"
+          move-class="transition-all duration-[400ms] ease-[cubic-bezier(0.2,0,0,1)]"
+        >
+          <LeaderboardRow
             v-for="(p, index) in leaderboard"
             :key="p.id"
-            class="flex items-center justify-between p-3.5 rounded-xl transition-all duration-200"
-            :class="p.id === participant.id
-              ? 'bg-violet-50 border-2 border-violet-300'
-              : 'bg-white/80 border border-slate-200/60'"
-          >
-            <div class="flex items-center gap-3">
-              <span
-                v-if="index < 3"
-                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                :class="index === 0 ? 'bg-amber-500' : index === 1 ? 'bg-slate-400' : 'bg-amber-700'"
-              >{{ index + 1 }}</span>
-              <span v-else class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-slate-400 bg-slate-100">{{ index + 1 }}</span>
-              <span class="font-semibold text-sm" :class="p.id === participant.id ? 'text-violet-700' : 'text-slate-700'">{{ p.name }}</span>
-            </div>
-            <span class="font-bold text-sm tabular-nums" :class="p.id === participant.id ? 'text-violet-700' : 'text-slate-600'">{{ p.score }}</span>
-          </div>
-        </div>
+            :rank="index + 1"
+            :name="p.name"
+            :score="p.score"
+            :is-current-player="p.id === participant.id"
+            :animate="true"
+          />
+        </TransitionGroup>
       </div>
-      <div v-else class="text-slate-400 text-sm italic py-4">
+
+      <!-- Hidden leaderboard message (Req 8.8) -->
+      <div v-else class="text-muted-foreground text-sm italic py-4">
         Papan peringkat disembunyikan oleh admin.
       </div>
 
-      <!-- Back Button -->
+      <!-- Back to home — default UiButton uses brand gradient (Req 8.2) -->
       <NuxtLink to="/" class="block w-full pt-2">
-        <UiButton class="w-full h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base transition-all active:scale-[0.98]">
+        <UiButton class="w-full h-12 font-bold text-base">
           Kembali ke Beranda
         </UiButton>
       </NuxtLink>
+
     </div>
   </div>
 </template>
